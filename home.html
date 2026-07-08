@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Agri-Access uses satellite imagery and AI to deliver Basel III-compliant agricultural credit scoring for Indonesian banks and development finance institutions.">
+    <title>Agri-Access | Satellite Credit Intelligence for Agriculture</title>
+    <link rel="stylesheet" href="landing.css">
+</head>
+<body>
+    <nav class="site-nav">
+        <div class="nav-inner">
+            <a class="brand" href="/">Agri-Access</a>
+            <div class="nav-links">
+                <a href="#about">About</a>
+                <a href="#how-it-works">How it works</a>
+                <a href="#features">Features</a>
+                <a href="#case-studies">Case studies</a>
+                <a href="#indonesia">Indonesia</a>
+                <a class="nav-cta" href="#contact">Request Pilot Access</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-inner">
+            <p class="eyebrow">B2B Banking Infrastructure</p>
+            <h1>Satellite-powered credit access for Indonesian farmers</h1>
+            <p class="hero-lead">
+                Agri-Access helps banks and development institutions assess agricultural credit risk in about one minute
+                using real-time satellite imagery, weather data, and Basel III-compliant models — without costly field visits.
+            </p>
+            <div class="hero-actions">
+                <a class="btn btn-primary" href="#case-studies">View case studies</a>
+                <a class="btn btn-secondary" href="#how-it-works">See how it works</a>
+            </div>
+            <div class="hero-stats">
+                <div class="stat">
+                    <strong>1 min</strong>
+                    <span>Credit assessment</span>
+                </div>
+                <div class="stat">
+                    <strong>29M+</strong>
+                    <span>Farmers addressable</span>
+                </div>
+                <div class="stat">
+                    <strong>Basel III</strong>
+                    <span>PD, LGD, EAD, ECL</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section id="about" class="section">
+        <div class="section-inner two-col">
+            <div>
+                <h2>Financial inclusion at national scale</h2>
+                <p>
+                    Most smallholder farmers in Indonesia lack formal credit histories. Traditional underwriting depends on
+                    branch visits, collateral paperwork, and slow manual review — leaving millions outside the banking system.
+                </p>
+                <p>
+                    Agri-Access is an alternative credit scoring layer built for banks, rural lenders, and international
+                    development partners who need fast, explainable, and regulation-ready agricultural risk assessment.
+                </p>
+            </div>
+            <div class="card highlight-card">
+                <h3>Who we serve</h3>
+                <ul>
+                    <li>Commercial and rural banks in Indonesia</li>
+                    <li>Microfinance and cooperative lenders</li>
+                    <li>Multilateral and development finance institutions</li>
+                    <li>Agri-fintech platforms integrating via API</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section id="how-it-works" class="section section-alt">
+        <div class="section-inner">
+            <h2 class="section-title">How it works</h2>
+            <p class="section-subtitle">From farm coordinates to a bank-ready credit decision in about one minute.</p>
+            <div class="steps">
+                <article class="step">
+                    <span class="step-num">1</span>
+                    <h3>Locate the farm</h3>
+                    <p>Select an Indonesian demo farm or enter latitude, longitude, crop type, and loan details.</p>
+                </article>
+                <article class="step">
+                    <span class="step-num">2</span>
+                    <h3>Analyze satellite &amp; weather</h3>
+                    <p>Pull NASA satellite tiles and weather signals to evaluate vegetation health and climate risk.</p>
+                </article>
+                <article class="step">
+                    <span class="step-num">3</span>
+                    <h3>Score with AI ensemble</h3>
+                    <p>Random Forest + XGBoost models output credit score, SLIK rating, and Basel III risk parameters.</p>
+                </article>
+                <article class="step">
+                    <span class="step-num">4</span>
+                    <h3>Explain &amp; decide</h3>
+                    <p>SHAP drivers and Gemini-powered farmer explanations support transparent lending decisions.</p>
+                </article>
+            </div>
+            <div class="section-cta">
+                <a class="btn btn-primary" href="#contact">Request pilot walkthrough</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="section">
+        <div class="section-inner">
+            <h2 class="section-title">Platform capabilities</h2>
+            <div class="feature-grid">
+                <article class="feature-card">
+                    <h3>Satellite risk intelligence</h3>
+                    <p>Multi-source imagery (Landsat, MODIS, VIIRS) with vegetation and land-use signals for any farm location.</p>
+                </article>
+                <article class="feature-card">
+                    <h3>Basel III compliance</h3>
+                    <p>Probability of Default, Loss Given Default, Exposure at Default, and Expected Credit Loss for regulatory reporting.</p>
+                </article>
+                <article class="feature-card">
+                    <h3>Explainable AI (SHAP)</h3>
+                    <p>Waterfall charts show which satellite, weather, and farm factors drive each credit outcome.</p>
+                </article>
+                <article class="feature-card">
+                    <h3>Indonesian SLIK alignment</h3>
+                    <p>Credit scores mapped to the 1–5 collectibility scale used in Indonesian banking supervision.</p>
+                </article>
+                <article class="feature-card">
+                    <h3>Farmer-friendly narratives</h3>
+                    <p>Gemini-generated explanations in Indonesian and English for branch staff and farmer communication.</p>
+                </article>
+                <article class="feature-card">
+                    <h3>API-first architecture</h3>
+                    <p>REST endpoints for integration into core banking, LOS, and partner pilot workflows.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section id="case-studies" class="section section-alt">
+        <div class="section-inner">
+            <h2 class="section-title">Pilot case studies</h2>
+            <p class="section-subtitle">Illustrative scenarios showing how feasibility is validated in real lending workflows.</p>
+            <div class="case-grid">
+                <article class="case-card">
+                    <h3>Case 1: Rice working-capital loan screening</h3>
+                    <p><strong>Region:</strong> West Java</p>
+                    <p><strong>Challenge:</strong> Small farmers with limited formal history require fast pre-screening.</p>
+                    <p><strong>Outcome:</strong> Screening cycle reduced from multi-day manual review to approximately one minute per farm profile.</p>
+                </article>
+                <article class="case-card">
+                    <h3>Case 2: Palm oil portfolio risk triage</h3>
+                    <p><strong>Region:</strong> Sumatra</p>
+                    <p><strong>Challenge:</strong> Bank team needs consistent risk bands across distributed branches.</p>
+                    <p><strong>Outcome:</strong> Basel III-style PD/LGD/EAD outputs enabled consistent internal risk prioritization across applications.</p>
+                </article>
+                <article class="case-card">
+                    <h3>Case 3: Coffee cooperative lending support</h3>
+                    <p><strong>Region:</strong> Central Java</p>
+                    <p><strong>Challenge:</strong> Loan officers need explainable decisions for cooperative discussions.</p>
+                    <p><strong>Outcome:</strong> SHAP-based drivers and bilingual summaries improved transparency during farmer-facing credit conversations.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section id="indonesia" class="section section-alt">
+        <div class="section-inner two-col">
+            <div>
+                <h2>Built for Indonesia's agricultural economy</h2>
+                <p>
+                    Demo scenarios cover major production regions — West Java rice, Riau palm oil, Central Java coffee,
+                    South Sulawesi cocoa, Lampung cooperatives, and East Kalimantan estates.
+                </p>
+                <p>
+                    Models incorporate crop-specific risk patterns, KUR rate bands, agricultural NPL benchmarks, and
+                    OJK alternative scoring context for credible pilot conversations with local banks.
+                </p>
+            </div>
+            <div class="card region-card">
+                <h3>Demo farm regions</h3>
+                <ul class="region-list">
+                    <li>Indramayu — rice (West Java)</li>
+                    <li>Riau — palm oil (Sumatra)</li>
+                    <li>Temanggung — coffee (Central Java)</li>
+                    <li>South Sumatra — cocoa</li>
+                    <li>Lampung — coffee cooperative</li>
+                    <li>South Sulawesi — cocoa cluster</li>
+                    <li>Lombok — dryland rice (NTB)</li>
+                    <li>East Kalimantan — estate scale</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="section demo-banner">
+        <div class="section-inner demo-banner-inner">
+            <div>
+                <h2>Ready to pitch your next pilot?</h2>
+                <p>Contact the Agri-Access team for private platform access and pilot onboarding.</p>
+            </div>
+            <a class="btn btn-primary btn-large" href="mailto:pilot@agri-access.example">Request Private Demo</a>
+        </div>
+    </section>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div>
+                <strong>Agri-Access</strong>
+                <p>Alternative credit scoring for agricultural finance in Indonesia and emerging markets.</p>
+            </div>
+            <div class="footer-links">
+                <a href="#case-studies">Case studies</a>
+                <a href="#contact">Pilot access</a>
+                <a href="#about">About</a>
+            </div>
+        </div>
+        <p class="footer-copy">&copy; 2026 Agri-Access. For demonstration and pilot partnership discussions.</p>
+    </footer>
+</body>
+</html>

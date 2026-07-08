@@ -1,0 +1,5 @@
+{
+  "version": 2,
+  "builds": [{ "src": "basel_iii_api.py", "use": "@vercel/python" }],
+  "routes": [{ "src": "/(.*)", "dest": "basel_iii_api.py" }]
+}

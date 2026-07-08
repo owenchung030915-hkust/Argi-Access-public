@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: agri-access
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn basel_iii_api:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 180
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: OPENWEATHER_API_KEY
+        sync: false
+      - key: AGRI_API_AUTH_TOKEN
+        sync: false
+      - key: AGRI_STRICT_REAL_ANALYSIS
+        value: "false"
+      - key: AGRI_ENABLE_PRIVATE_PLATFORM
+        value: "false"
