@@ -31,8 +31,12 @@
 # 1. Navigate to project directory
 cd agri-access
 
-# 2. Install dependencies  
+# 2. Install dependencies
+# Public deploy/lightweight:
 pip install -r requirements.txt
+
+# Full local private platform:
+# pip install -r requirements-private.txt
 
 # 3. Start application
 python3 basel_iii_api.py

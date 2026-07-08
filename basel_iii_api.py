@@ -35,7 +35,6 @@ def convert_numpy_types(obj):
         return tuple(convert_numpy_types(item) for item in obj)
     else:
         return obj
-from banking_credit_model import AgricultureMLModel
 import sys
 import os
 import traceback
@@ -150,9 +149,19 @@ def initialize_model():
     
     try:
         with model_state.lock:
+            if not PRIVATE_PLATFORM_ENABLED:
+                # Public demo mode: skip heavy ML pipeline to keep deploy lightweight.
+                model_state.model = "public_demo_mode"
+                model_state.weather_processor = "openweather_processor"
+                model_state.basel_calculator = "basel_iii_calculator"
+                model_state.is_ready = True
+                print("Public demo mode enabled; private platform pipeline is disabled", flush=True)
+                return True
+
             print("Creating model components...", flush=True)
 
             # Train credit model before Prithvi/PyTorch to avoid XGBoost segfaults on macOS.
+            from banking_credit_model import AgricultureMLModel
             model_state.ml_model = AgricultureMLModel()
             if model_state.ml_model.is_trained:
                 print("Random Forest + XGBoost ML model trained and ready", flush=True)
