@@ -352,6 +352,63 @@ class AgricultureMLModel:
         
         return X, y
 
+    @staticmethod
+    def _field(farm_data: Dict, *keys, default=None):
+        """Read a field under either API snake_case or frontend camelCase keys."""
+        for key in keys:
+            if key in farm_data and farm_data[key] is not None and farm_data[key] != '':
+                return farm_data[key]
+        return default
+
+    @classmethod
+    def _normalize_farm_data(cls, farm_data: Dict) ->Dict:
+        """Normalize mixed API/frontend farm payloads into one schema."""
+        crop_raw = str(cls._field(farm_data, 'primaryCrop', 'crop_type', 'crop', default='rice')).strip().lower()
+        crop_aliases = {
+            'rice': 'rice', 'padi': 'rice',
+            'palm oil': 'palm oil', 'palm_oil': 'palm oil', 'palmoil': 'palm oil', 'kelapa sawit': 'palm oil',
+            'coffee': 'coffee', 'kopi': 'coffee',
+            'cocoa': 'cocoa', 'kakao': 'cocoa',
+            'rubber': 'rubber', 'karet': 'rubber',
+        }
+        crop_type = crop_aliases.get(crop_raw, 'rice')
+
+        collateral_raw = str(cls._field(farm_data, 'collateralType', 'collateral_type', default='land')).strip().lower()
+        collateral_type = collateral_raw if collateral_raw in {'land', 'equipment', 'none', 'crop', 'vehicle'} else 'land'
+
+        try:
+            farm_size = float(cls._field(farm_data, 'farmSize', 'farm_size', default=1.5))
+        except (TypeError, ValueError):
+            farm_size = 1.5
+        try:
+            latitude = float(cls._field(farm_data, 'latitude', default=-6.7749))
+        except (TypeError, ValueError):
+            latitude = -6.7749
+        try:
+            longitude = float(cls._field(farm_data, 'longitude', default=107.1389))
+        except (TypeError, ValueError):
+            longitude = 107.1389
+        try:
+            loan_amount = float(cls._field(farm_data, 'loanAmount', 'loan_amount', default=50_000_000))
+        except (TypeError, ValueError):
+            loan_amount = 50_000_000
+        try:
+            loan_term = int(float(cls._field(farm_data, 'loanTerm', 'loan_term', default=12)))
+        except (TypeError, ValueError):
+            loan_term = 12
+
+        return {
+            'farmerName': str(cls._field(farm_data, 'farmerName', 'farmer_name', default='Unknown')),
+            'farmSize': max(0.1, farm_size),
+            'latitude': latitude,
+            'longitude': longitude,
+            'primaryCrop': crop_type,
+            'loanAmount': max(1_000_000.0, loan_amount),
+            'loanTerm': max(1, loan_term),
+            'loanPurpose': str(cls._field(farm_data, 'loanPurpose', 'loan_purpose', default='working_capital')),
+            'collateralType': collateral_type,
+        }
+
     def calculate_credit_score(self, farm_data: Dict, satellite_features: np.ndarray = None, 
                              weather_features: np.ndarray = None) ->Dict:
         """
@@ -368,13 +425,8 @@ class AgricultureMLModel:
         """
 
         try:
-            # Extract and validate input data
-            farm_size = float(farm_data.get('farmSize', 0))
-            latitude = float(farm_data.get('latitude', 0))
-            longitude = float(farm_data.get('longitude', 0))
-            crop_type = farm_data.get('primaryCrop', 'rice')
-            farmer_name = farm_data.get('farmerName', 'Unknown')
-            loan_amount = float(farm_data.get('loanAmount', 50_000_000))
+            farm_data = self._normalize_farm_data(farm_data)
+            loan_amount = float(farm_data['loanAmount'])
 
             # Prepare feature vector (320 features total)
             features = self._prepare_feature_vector(farm_data, satellite_features, weather_features)
@@ -382,7 +434,9 @@ class AgricultureMLModel:
             if self.is_trained:
                 # Use trained ML models for prediction
                 predictions = self._predict_with_ensemble(features)
-                credit_score, pd, lgd, ead = predictions
+                credit_score, pd, lgd, _predicted_ead = predictions
+                # For a loan application, EAD tracks requested exposure (term-loan CCF ~1.0)
+                ead = loan_amount
                 
                 # Generate SHAP explanations
                 shap_values = self._calculate_shap_explanations(features)
@@ -447,6 +501,7 @@ class AgricultureMLModel:
     def _prepare_feature_vector(self, farm_data: Dict, satellite_features: np.ndarray = None, 
                                weather_features: np.ndarray = None) ->np.ndarray:
         """Prepare 320-dimensional feature vector for ML models"""
+        farm_data = self._normalize_farm_data(farm_data)
         features = np.zeros(320)
         
         # Satellite features (256 dimensions)
@@ -457,11 +512,13 @@ class AgricultureMLModel:
         if weather_features is not None:
             features[256:320] = weather_features[:64] if len(weather_features) >= 64 else np.pad(weather_features, (0, 64 - len(weather_features)))
         
-        # Traditional features
-        features[256] = float(farm_data.get('farmSize', 1.0))
-        features[257] = ['rice', 'palm oil', 'coffee', 'cocoa', 'rubber'].index(farm_data.get('primaryCrop', 'rice'))
-        features[258] = float(farm_data.get('latitude', -6.0))
-        features[259] = float(farm_data.get('longitude', 106.0))
+        # Traditional features occupy the first weather slots (matches training layout)
+        crop_list = ['rice', 'palm oil', 'coffee', 'cocoa', 'rubber']
+        crop = farm_data['primaryCrop']
+        features[256] = float(farm_data['farmSize'])
+        features[257] = float(crop_list.index(crop) if crop in crop_list else 0)
+        features[258] = float(farm_data['latitude'])
+        features[259] = float(farm_data['longitude'])
         
         return features
 
@@ -694,30 +751,31 @@ class AgricultureMLModel:
 
     def _fallback_calculation(self, farm_data: Dict) ->Tuple[float, float, float, float]:
         """Fallback calculation when ML models are not available"""
+        farm_data = self._normalize_farm_data(farm_data)
         base_score = 500
         
         # Farm size bonus
-        farm_size = float(farm_data.get('farmSize', 1.0))
+        farm_size = float(farm_data['farmSize'])
         base_score += min(50, farm_size * 15)
         
         # Crop type adjustments
         crop_bonuses = {'rice': 40, 'palm oil': 30, 'coffee': 25, 'cocoa': 20, 'rubber': 35}
-        base_score += crop_bonuses.get(farm_data.get('primaryCrop', 'rice'), 0)
+        base_score += crop_bonuses.get(farm_data['primaryCrop'], 0)
         
         # Regional bonus (Java region)
-        if -8 <= float(farm_data.get('latitude', 0)) <= -6:
+        if -8 <= float(farm_data['latitude']) <= -6:
             base_score += 25
         
         # Add deterministic variation based on farm characteristics
-        variation = (float(farm_data.get('latitude', 0)) * float(farm_data.get('longitude', 0)) * farm_size) % 50 - 25
+        variation = (float(farm_data['latitude']) * float(farm_data['longitude']) * farm_size) % 50 - 25
         credit_score = np.clip(base_score + variation, 300, 850)
         
         # Calculate other parameters
         pd = 0.01 + 0.15 * (1 - (credit_score - 300) / 550) ** 1.5
         pd = np.clip(pd, 0.001, 0.2)
         
-        lgd = 0.4 if farm_data.get('collateralType') == 'land'else 0.6
-        ead = float(farm_data.get('loanAmount', 50_000_000))
+        lgd = 0.4 if farm_data['collateralType'] == 'land' else 0.6
+        ead = float(farm_data['loanAmount'])
         
         return credit_score, pd, lgd, ead
 

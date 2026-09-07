@@ -370,6 +370,25 @@ function addSatelliteMarkersToMap() {
 
 // ===== MAIN ANALYSIS FUNCTIONS =====
 
+async function waitForModelReady(maxWaitMs = 180000) {
+    const start = Date.now();
+    while (Date.now() - start < maxWaitMs) {
+        try {
+            const response = await fetch(API_CONFIG.endpoints.modelStatus);
+            if (response.ok) {
+                const status = await response.json();
+                if (status.model_ready) {
+                    return status;
+                }
+            }
+        } catch (error) {
+            console.warn('Model status check failed:', error.message);
+        }
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
+    throw new Error('Model is still initializing. Please wait a moment and try again.');
+}
+
 async function analyzeWithRealNASAData() {
     console.log(' analyzeWithRealNASAData function called');
     
@@ -422,6 +441,10 @@ async function analyzeWithRealNASAData() {
         updateWorkflowStatus(1, 'completed');
         updateWorkflowStatus(2, 'active');
         loadingTitle.textContent = 'Basel III Credit Analysis';
+        loadingStatus.textContent = 'Waiting for ML model to become ready...';
+
+        const modelStatus = await waitForModelReady();
+        console.log(' Model ready:', modelStatus);
         loadingStatus.textContent = 'Processing satellite and weather data...';
         
         // Call Basel III API for credit scoring analysis
@@ -429,7 +452,7 @@ async function analyzeWithRealNASAData() {
         console.log(' Sending farm data:', farmData);
         
         const controller = new AbortController();
-        const timeoutId = setTimeout(() =>controller.abort(), API_CONFIG.timeout);
+        const timeoutId = setTimeout(() =>controller.abort(), Math.max(API_CONFIG.timeout, 120000));
         
         const response = await fetch(API_CONFIG.endpoints.analyze, {
             method: 'POST',

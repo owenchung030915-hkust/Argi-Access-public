@@ -169,6 +169,13 @@ def initialize_model():
                 print("Random Forest + XGBoost ML model initialized but not trained", flush=True)
 
             model_state.satellite_extractor = get_prithvi_extractor_lazy()
+            # Warm-load vision weights so the first /api/analyze is not delayed
+            try:
+                if hasattr(model_state.satellite_extractor, 'initialize_model'):
+                    model_state.satellite_extractor.initialize_model()
+                    print("Prithvi/ViT weights warm-loaded", flush=True)
+            except Exception as warm_err:
+                print(f"Prithvi warm-load skipped: {warm_err}", flush=True)
             print("Prithvi satellite extractor initialized", flush=True)
             
             # Initialize other components
@@ -737,7 +744,18 @@ def analyze_farm():
                 basel_params = analysis['baselIIIRiskParameters']
                 pd = float(basel_params['probabilityOfDefault'])
                 lgd = float(basel_params['lossGivenDefault'])
-                ead = float(basel_params['exposureAtDefault'].replace('Rp ', '').replace(',', ''))
+                ead_raw = basel_params['exposureAtDefault']
+                if isinstance(ead_raw, (int, float)):
+                    ead = float(ead_raw)
+                else:
+                    ead = float(str(ead_raw).replace('Rp ', '').replace(',', ''))
+                # Prefer requested loan amount as EAD for application underwriting
+                ead = float(farm_data['loan_amount']) if farm_data.get('loan_amount') else ead
+                # Collateral-aware LGD nudge when model did not see collateral explicitly
+                if farm_data.get('collateral_type') == 'land':
+                    lgd = min(lgd, max(0.10, lgd * 0.85))
+                elif farm_data.get('collateral_type') == 'none':
+                    lgd = max(lgd, min(0.90, lgd * 1.15))
                 ecl = pd * lgd * ead
                 
                 # Get SHAP explanations
@@ -815,6 +833,7 @@ def analyze_farm():
                 'exposure_at_default': float(basel_results['ead']),
                 'expected_credit_loss': float(basel_results['ecl']),
                 'credit_score': float(credit_score),
+                'slik_score': int(slik_score),
                 'credit_score_normalized': round(((float(credit_score) - 300) / 550), 4),  # Normalized to 0-1 scale
                 'risk_rating': risk_rating,
                 'ifrs9_stage': ifrs9_stage
@@ -871,17 +890,25 @@ def analyze_farm():
 @app.route('/api/model-status', methods=['GET'])
 def model_status():
     """Check model readiness and API health"""
+    ml_trained = bool(model_state.ml_model and getattr(model_state.ml_model, 'is_trained', False))
+    xgb_ready = bool(model_state.ml_model and getattr(model_state.ml_model, 'xgboost', None) is not None)
     return jsonify({
         'api_version': API_VERSION,
         'model_version': MODEL_VERSION,
         'model_ready': model_state.is_ready,
+        'private_platform_enabled': PRIVATE_PLATFORM_ENABLED,
+        'ml_trained': ml_trained,
+        'xgboost_enabled': xgb_ready,
         'components': {
             'basel_calculator': model_state.basel_calculator is not None,
             'weather_processor': model_state.weather_processor is not None,
             'satellite_extractor': model_state.satellite_extractor is not None,
-            'shap_explainer': model_state.shap_explainer is not None
+            'shap_explainer': model_state.shap_explainer is not None,
+            'ml_model': model_state.ml_model is not None,
+            'ml_trained': ml_trained,
+            'xgboost': xgb_ready
         },
-        'status': 'ready'if model_state.is_ready else 'initializing',
+        'status': 'ready' if model_state.is_ready else 'initializing',
         'timestamp': datetime.now().isoformat()
     })
 
@@ -1092,13 +1119,16 @@ def generate_gemini_explanation(credit_data, shap_data, weather_data, satellite_
         
     except Exception as e:
         import sys
-        print(f"GEMINI API ERROR OCCURRED: {str(e)}", flush=True)
+        err_text = str(e)
+        print(f"GEMINI API ERROR OCCURRED: {err_text}", flush=True)
         print(f"Error type: {type(e).__name__}", flush=True)
         sys.stdout.flush()
-        import traceback
-        print(f"Full traceback:", flush=True)
-        traceback.print_exc()
-        sys.stdout.flush()
+        # Location/region blocks are expected in some networks; skip noisy full traceback
+        if 'location is not supported' not in err_text.lower():
+            import traceback
+            print(f"Full traceback:", flush=True)
+            traceback.print_exc()
+            sys.stdout.flush()
         # Return fallback explanation
         print(f"Using fallback explanation", flush=True)
         sys.stdout.flush()
